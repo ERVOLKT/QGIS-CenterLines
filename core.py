@@ -5,19 +5,17 @@ for l in iface.legendInterface().layers():
 	if layerType == 0:
 			print("Vektor");
 			vectorlyr = l;
+			geom_array = [];
 			for f in vectorlyr.getFeatures():
 				geom = f.geometry();
 				print(geom.asPoint());
-
+				#add POints to array as QgsGeometry objects
+				geom_array.append(geom);
+			print(geom_array);
 	else:
 		print("this part belongs to Raster");
-        
-#layer erstellen
-#???
 
+#z.B. 
+#iface.addVectorLayer('GIS/Qgis_Plugins/CenterLines/project/points.shp', "points", "ogr")
 
-#Geometrie erstellen
-#z.B. gLine = QgsGeometry.fromPolyline([QgsPoint(1, 1), QgsPoint(2, 2)])
-        
-# dir() shows all object methods!!!
-#print(dir(object));
+#dir(xyz) druckt die Objekt-Methoden
