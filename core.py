@@ -30,20 +30,21 @@ for l in iface.legendInterface().layers():
 			   QgsCoordinateReferenceSystem) - optional
 			6. driver name for the output file """
 
-			# create a linestring feature
-			writer = QgsVectorFileWriter("GIS/Qgis_Plugins/CenterLines/project/lines.shp", "CP1250", fields, QGis.WKBLineString, None, "ESRI Shapefile")
-
+			# create a linestring feature, in WebMercator here, has to be adapted lateron
+			# vector linestring layer takes first point geometry & combines it w/ all other points
+			writer = QgsVectorFileWriter("GIS/Qgis_Plugins/CenterLines/project/lines.shp", "CP1250", fields, QGis.WKBLineString, QgsCoordinateReferenceSystem(3857, QgsCoordinateReferenceSystem.PostgisCrsId), "ESRI Shapefile")
 			if writer.hasError() != QgsVectorFileWriter.NoError:
 			    print "Error when creating shapefile: ",  writer.errorMessage()
 
-			# add a feature
-			fet = QgsFeature()
-			 # add feature geometry attributes
-			fet.setGeometry(QgsGeometry.fromPolyline([QgsPoint(1, 1), QgsPoint(2, 2)]))
-			#fet.setGeometry(QgsGeometry.fromPoint(QgsPoint(10,10)))
-			 # add non-geo attributes
-			fet.setAttributes([1, "text"])
-			writer.addFeature(fet)
+			for features in range(1,len(geom_array)):
+				# add a feature
+				fet = QgsFeature()
+				 # add feature geometry attributes
+				fet.setGeometry(QgsGeometry.fromPolyline([QgsPoint(geom_array[0]), QgsPoint(geom_array[features])]))
+				#fet.setGeometry(QgsGeometry.fromPoint(QgsPoint(10,10)))
+				 # add non-geo attributes
+				fet.setAttributes([features, "text"])
+				writer.addFeature(fet)
 
 			# delete the writer to flush features to disk
 			del writer
