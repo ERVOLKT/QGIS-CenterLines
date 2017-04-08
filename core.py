@@ -1,21 +1,59 @@
 #for now, the core function is intended to work solely within the qgis python console
+# import modules for creation of vector files...
+from PyQt4.QtCore import QVariant;
 
 for l in iface.legendInterface().layers():
 	layerType=l.type();
+	#careful, this will attempt to create lines for any vector layer!!!
 	if layerType == 0:
 			print("Vektor");
 			vectorlyr = l;
 			geom_array = [];
 			for f in vectorlyr.getFeatures():
-				geom = f.geometry();
-				print(geom.asPoint());
+				geom = f.geometry().asPoint();
+				print(geom);
 				#add POints to array as QgsGeometry objects
 				geom_array.append(geom);
-			print(geom_array);
+
+			# define fields for feature attributes. A QgsFields object is needed
+			fields = QgsFields()
+			fields.append(QgsField("id", QVariant.Int))
+			#fields.append(QgsField("second", QVariant.String))
+
+			""" create an instance of vector file writer, which will create the vector file.
+			Arguments:
+			1. path to new file (will fail if exists already)
+			2. encoding of the attributes
+			3. field map
+			4. geometry type - from WKBTYPE enum
+			5. layer's spatial reference (instance of
+			   QgsCoordinateReferenceSystem) - optional
+			6. driver name for the output file """
+
+			# create a linestring feature
+			writer = QgsVectorFileWriter("GIS/Qgis_Plugins/CenterLines/project/lines.shp", "CP1250", fields, QGis.WKBLineString, None, "ESRI Shapefile")
+
+			if writer.hasError() != QgsVectorFileWriter.NoError:
+			    print "Error when creating shapefile: ",  writer.errorMessage()
+
+			# add a feature
+			fet = QgsFeature()
+			 # add feature geometry attributes
+			fet.setGeometry(QgsGeometry.fromPolyline([QgsPoint(1, 1), QgsPoint(2, 2)]))
+			#fet.setGeometry(QgsGeometry.fromPoint(QgsPoint(10,10)))
+			 # add non-geo attributes
+			fet.setAttributes([1, "text"])
+			writer.addFeature(fet)
+
+			# delete the writer to flush features to disk
+			del writer
+
+			#add new layer to TOC -- has to be changed lateron, this is not valid from within a plugin(?)
+			iface.addVectorLayer('GIS/Qgis_Plugins/CenterLines/project/lines.shp', "lines", "ogr");
+						
+
 	else:
 		print("this part belongs to Raster");
 
-#z.B. 
-#iface.addVectorLayer('GIS/Qgis_Plugins/CenterLines/project/points.shp', "points", "ogr")
+#dir(xyz) prints methods for any object
 
-#dir(xyz) druckt die Objekt-Methoden
