@@ -2,9 +2,9 @@
 # import modules for creation of vector files...
 from PyQt4.QtCore import QVariant;
 
+#this will attempt to create lines for any vector layer!!
 for l in iface.legendInterface().layers():
 	layerType=l.type();
-	#careful, this will attempt to create lines for any vector layer!!!
 	if layerType == 0:
 			print("Vektor");
 			vectorlyr = l;

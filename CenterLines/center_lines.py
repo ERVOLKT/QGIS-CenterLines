@@ -20,8 +20,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant
+
+from PyQt4.QtGui import QAction, QIcon, QFileDialog
+#need to be in there, for e.g. QgsFields or object or QgsVectorFileWriter:
+from qgis.core import *
+from qgis.gui import *
+
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -58,6 +63,8 @@ class CenterLines:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
+        # Create the dialog (after translation) and keep reference
+        self.dlg = CenterLinesDialog()
 
         # Declare instance attributes
         self.actions = []
@@ -65,6 +72,10 @@ class CenterLines:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'CenterLines')
         self.toolbar.setObjectName(u'CenterLines')
+        
+        #for pushbutton path selection
+        self.dlg.lineEdit.clear()
+        self.dlg.pushButton.clicked.connect(self.select_output_file)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -133,7 +144,7 @@ class CenterLines:
         """
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = CenterLinesDialog()
+        #self.dlg = CenterLinesDialog()
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -179,15 +190,89 @@ class CenterLines:
         # remove the toolbar
         del self.toolbar
 
+    def select_output_file(self):
+        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","", '*.txt')
+        self.dlg.lineEdit.setText(filename)
 
     def run(self):
-        """Run method that performs all the real work"""
+        """Run method that performs all the real work
+        """using the self.dlg.comboBox was a dead end, instead QgsMapLayerComboBox (automatically updated) will serve our needs better
+       
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
+
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
-            pass
+            """filename = self.dlg.lineEdit.text()
+            output_file = open(filename, 'w')"""
+
+            #specify selected layer in intelligent comboBox and translate it to iface layer index
+            selectedLayerIndex = self.dlg.mMapLayerComboBox.currentIndex();
+            print "selectedLayerIndex: ", selectedLayerIndex;
+            layers = self.iface.legendInterface().layers();
+            selectedLayer = layers[selectedLayerIndex]
+            print "Selected layer's name: ",selectedLayer.name();
+            """fields = selectedLayer.pendingFields()
+            fieldnames = [field.name() for field in fields]
+
+            for f in selectedLayer.getFeatures():
+                line = ','.join(unicode(f[x]) for x in fieldnames) + '\n'
+                unicode_line = line.encode('utf-8')
+                output_file.write(unicode_line)
+            output_file.close()"""
+
+            if selectedLayer.type() == 0:
+                print("selected layer type is Vector");
+                #vectorlyr = l;
+                geom_array = [];
+                for f in selectedLayer.getFeatures():
+                    geom = f.geometry().asPoint();
+                    print(geom);
+                    #add Points to array as QgsGeometry objects
+                    geom_array.append(geom);
+
+                    # define fields for feature attributes. A QgsFields object is needed
+                    fields = QgsFields()
+                    fields.append(QgsField("id", QVariant.Int))
+                    #fields.append(QgsField("second", QVariant.String))
+
+                    """ create an instance of vector file writer, which will create the vector file.
+                    Arguments:
+                    1. path to new file (will fail if exists already)
+                    2. encoding of the attributes
+                    3. field map
+                    4. geometry type - from WKBTYPE enum
+                    5. layer's spatial reference (instance of
+                       QgsCoordinateReferenceSystem) - optional
+                    6. driver name for the output file """
+
+                # create a linestring feature, in WebMercator here, has to be adapted lateron
+                # vector linestring layer takes first point geometry & combines it w/ all other points
+                writer = QgsVectorFileWriter("GIS/Qgis_Plugins/CenterLines/project/lines.shp", "CP1250", fields, QGis.WKBLineString, QgsCoordinateReferenceSystem(3857, QgsCoordinateReferenceSystem.PostgisCrsId), "ESRI Shapefile")
+                if writer.hasError() != QgsVectorFileWriter.NoError:
+                    print "Error when creating shapefile: ",  writer.errorMessage()
+
+                for features in range(1,len(geom_array)):
+                    # add a feature
+                    fet = QgsFeature()
+                     # add feature geometry attributes
+                    fet.setGeometry(QgsGeometry.fromPolyline([QgsPoint(geom_array[0]), QgsPoint(geom_array[features])]))
+                    #fet.setGeometry(QgsGeometry.fromPoint(QgsPoint(10,10)))
+                     # add non-geo attributes
+                    fet.setAttributes([features, "text"])
+                    writer.addFeature(fet)
+
+                # delete the writer to flush features to disk
+                del writer
+
+                #add new layer to TOC -- has to be changed lateron, this is not valid from within a plugin(?)
+                self.iface.addVectorLayer('GIS/Qgis_Plugins/CenterLines/project/lines.shp', "lines", "ogr");
+            else:
+                print("this part belongs to Raster");
+        #dir(xyz) prints methods for any object
+
+
