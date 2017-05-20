@@ -56,6 +56,8 @@ class CenterLines:
             'i18n',
             'CenterLines_{}.qm'.format(locale))
 
+        layer_alias = "";
+
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
@@ -191,12 +193,13 @@ class CenterLines:
         del self.toolbar
 
     def select_output_file(self):
-        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","", '*.txt')
+        filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","", "shapefile")
         self.dlg.lineEdit.setText(filename)
+        #print "Filename is %s" %(filename);
 
     def run(self):
-        """Run method that performs all the real work
-        """using the self.dlg.comboBox was a dead end, instead QgsMapLayerComboBox (automatically updated) will serve our needs better
+        #Run method that performs all the real work
+        #using the self.dlg.comboBox was a dead end, instead QgsMapLayerComboBox (automatically updated) will serve our needs better
        
         # show the dialog
         self.dlg.show()
@@ -207,15 +210,20 @@ class CenterLines:
 
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
-            """filename = self.dlg.lineEdit.text()
-            output_file = open(filename, 'w')"""
+            # 
+            filename = self.dlg.lineEdit.text();
+            print "Filename is %s" %(filename);
+            lastslash = filename.rfind("/");
+            #set CenterLines member variable layer_alias for layers's name in TOC
+            layer_alias = filename[lastslash+1:len(filename)];
 
             #specify selected layer in intelligent comboBox and translate it to iface layer index
             selectedLayerIndex = self.dlg.mMapLayerComboBox.currentIndex();
             print "selectedLayerIndex: ", selectedLayerIndex;
             layers = self.iface.legendInterface().layers();
             selectedLayer = layers[selectedLayerIndex]
-            print "Selected layer's name: ",selectedLayer.name();
+            #print "Selected layer's name: ",selectedLayer.name();
+            
             """fields = selectedLayer.pendingFields()
             fieldnames = [field.name() for field in fields]
 
@@ -227,7 +235,6 @@ class CenterLines:
 
             if selectedLayer.type() == 0:
                 print("selected layer type is Vector");
-                #vectorlyr = l;
                 geom_array = [];
                 for f in selectedLayer.getFeatures():
                     geom = f.geometry().asPoint();
@@ -252,7 +259,7 @@ class CenterLines:
 
                 # create a linestring feature, in WebMercator here, has to be adapted lateron
                 # vector linestring layer takes first point geometry & combines it w/ all other points
-                writer = QgsVectorFileWriter("GIS/Qgis_Plugins/CenterLines/project/lines.shp", "CP1250", fields, QGis.WKBLineString, QgsCoordinateReferenceSystem(3857, QgsCoordinateReferenceSystem.PostgisCrsId), "ESRI Shapefile")
+                writer = QgsVectorFileWriter(filename+".shp", "CP1250", fields, QGis.WKBLineString, QgsCoordinateReferenceSystem(3857, QgsCoordinateReferenceSystem.PostgisCrsId), "ESRI Shapefile")
                 if writer.hasError() != QgsVectorFileWriter.NoError:
                     print "Error when creating shapefile: ",  writer.errorMessage()
 
@@ -270,9 +277,12 @@ class CenterLines:
                 del writer
 
                 #add new layer to TOC -- has to be changed lateron, this is not valid from within a plugin(?)
-                self.iface.addVectorLayer('GIS/Qgis_Plugins/CenterLines/project/lines.shp', "lines", "ogr");
+                self.iface.addVectorLayer(filename+'.shp', layer_alias, "ogr");
             else:
-                print("this part belongs to Raster");
+                print("Raster layer selected. Please specify a vector layer!");
+                self.iface.messageBar().pushMessage("Error", "Raster layer selected. Please specify a vector layer!", level=QgsMessageBar.WARNING)
+                self.run();
+
         #dir(xyz) prints methods for any object
 
 
