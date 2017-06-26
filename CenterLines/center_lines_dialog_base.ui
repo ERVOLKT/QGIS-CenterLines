@@ -34,12 +34,12 @@
     <rect>
      <x>20</x>
      <y>30</y>
-     <width>141</width>
+     <width>181</width>
      <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>Select Center POINT</string>
+    <string>Select Center POINT layer</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -81,11 +81,37 @@
   <widget class="QgsMapLayerComboBox" name="mMapLayerComboBox">
    <property name="geometry">
     <rect>
-     <x>170</x>
+     <x>210</x>
      <y>30</y>
-     <width>211</width>
+     <width>171</width>
      <height>27</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>100</y>
+     <width>231</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Choose Center POINT by hand</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>70</y>
+     <width>371</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>[1st point layer feature is center of lines by default]</string>
    </property>
   </widget>
  </widget>

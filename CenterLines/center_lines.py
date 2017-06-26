@@ -75,9 +75,14 @@ class CenterLines:
         self.toolbar = self.iface.addToolBar(u'CenterLines')
         self.toolbar.setObjectName(u'CenterLines')
         
-        #for pushbutton path selection
-        self.dlg.lineEdit.clear()
-        self.dlg.pushButton.clicked.connect(self.select_output_file)
+        #for pushbutton path selection: clear path and trigger fu on event
+        self.dlg.lineEdit.clear();
+        self.dlg.pushButton.clicked.connect(self.select_output_file);
+        # register a click, yes, but how register checked/unchecked?
+    	#trigger a function below:
+        self.dlg.checkBox.clicked.connect(self.sel_features);
+    	
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -196,6 +201,27 @@ class CenterLines:
         filename = QFileDialog.getSaveFileName(self.dlg, "Select output file ","", "shapefile")
         self.dlg.lineEdit.setText(filename)
         #print "Filename is %s" %(filename);
+   
+    def sel_features(self):
+    	checkbox = self.dlg.checkBox;
+    	#print dir(checkbox);
+    	if (checkbox.isChecked()):
+    		#print checkbox.isTristate();
+    		print "is checked now";
+    		#recycling code
+    		selectedLayerIndex = self.dlg.mMapLayerComboBox.currentIndex();
+    		layers = self.iface.legendInterface().layers();
+    		selectedLayer = layers[selectedLayerIndex];
+
+    		# To do: include buttons for center input features and periphery input features
+    		# And, of course, only process selected features...
+    		self.iface.showAttributeTable(selectedLayer);
+    		#checkbox.setTristate(true);
+    	else:
+    		#checkbox.isTristate();
+    		#print checkbox.setTristate(true);
+    		print "not checked";
+    		
 
     def run(self):
         #Run method that performs all the real work
@@ -224,7 +250,16 @@ class CenterLines:
             selectedLayer = layers[selectedLayerIndex]
             #print "Selected layer's name: ",selectedLayer.name();
             
-            """fields = selectedLayer.pendingFields()
+            #add a radio button which is on 1stpoint: center-rest:satellites;
+            #other option should be to choose the center from attribute table...:
+            
+            #opens attribute table
+            #self.iface.showAttributeTable(selectedLayer);
+
+
+            """
+			field selection:
+            fields = selectedLayer.pendingFields()
             fieldnames = [field.name() for field in fields]
 
             for f in selectedLayer.getFeatures():
